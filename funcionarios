@@ -1,0 +1,113 @@
+import sqlite3
+
+def criar_tabela_funcionarios():
+    """Cria a tabela de funcionários no banco de dados."""
+    conn = sqlite3.connect('empresa.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS funcionarios (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nome TEXT NOT NULL,
+            cargo TEXT,
+            salario REAL NOT NULL
+        )
+    ''')
+    conn.commit()
+    conn.close()
+    print("Tabela 'funcionarios' criada ou já existente.")
+
+def adicionar_funcionario():
+    """Adiciona um novo funcionário ao banco de dados."""
+    conn = sqlite3.connect('empresa.db')
+    cursor = conn.cursor()
+    nome = input("Digite o nome do funcionário: ")
+    cargo = input("Digite o cargo do funcionário: ")
+    while True:
+        try:
+            salario = float(input("Digite o salário do funcionário: "))
+            break
+        except ValueError:
+            print("Entrada inválida para salário. Por favor, digite um número.")
+
+    cursor.execute("INSERT INTO funcionarios (nome, cargo, salario) VALUES (?, ?, ?)", (nome, cargo, salario))
+    conn.commit()
+    conn.close()
+    print(f"Funcionário '{nome}' adicionado com sucesso.")
+
+def listar_funcionarios():
+    """Lista todos os funcionários no banco de dados."""
+    conn = sqlite3.connect('empresa.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM funcionarios")
+    funcionarios = cursor.fetchall()
+    conn.close()
+
+    if not funcionarios:
+        print("\nNenhum funcionário cadastrado.")
+        return
+
+    print("\n--- Lista de Funcionários ---")
+    for funcionario in funcionarios:
+        print(f"ID: {funcionario[0]}, Nome: {funcionario[1]}, Cargo: {funcionario[2]}, Salário: R$ {funcionario[3]:.2f}")
+    print("-----------------------------")
+
+def buscar_funcionario_por_nome():
+    """Busca um funcionário pelo nome."""
+    conn = sqlite3.connect('empresa.db')
+    cursor = conn.cursor()
+    nome_busca = input("Digite o nome do funcionário a buscar: ")
+    cursor.execute("SELECT * FROM funcionarios WHERE nome LIKE ?", ('%' + nome_busca + '%',))
+    funcionarios_encontrados = cursor.fetchall()
+    conn.close()
+
+    if not funcionarios_encontrados:
+        print(f"\nNenhum funcionário encontrado com o nome '{nome_busca}'.")
+        return
+
+    print(f"\n--- Funcionários encontrados para '{nome_busca}' ---")
+    for funcionario in funcionarios_encontrados:
+        print(f"ID: {funcionario[0]}, Nome: {funcionario[1]}, Cargo: {funcionario[2]}, Salário: R$ {funcionario[3]:.2f}")
+    print("-----------------------------------------------------")
+
+def calcular_media_salarial():
+    """Calcula a média salarial dos funcionários."""
+    conn = sqlite3.connect('empresa.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT AVG(salario) FROM funcionarios")
+    media = cursor.fetchone()[0]
+    conn.close()
+
+    if media is None:
+        print("\nNão há funcionários para calcular a média salarial.")
+    else:
+        print(f"\nMédia salarial dos funcionários: R$ {media:.2f}")
+
+def menu():
+    """Exibe o menu principal e gerencia as opções."""
+    criar_tabela_funcionarios() # Garante que a tabela exista ao iniciar
+
+    while True:
+        print("\n========== GESTÃO DE FUNCIONÁRIOS ==========")
+        print("1) Adicionar funcionário")
+        print("2) Listar funcionários")
+        print("3) Buscar funcionário por nome")
+        print("4) Calcular média salarial")
+        print("0) Sair")
+        opcao = input("Escolha uma opção: ")
+
+        if opcao == "1":
+            adicionar_funcionario()
+        elif opcao == "2":
+            listar_funcionarios()
+        elif opcao == "3":
+            buscar_funcionario_por_nome()
+        elif opcao == "4":
+            calcular_media_salarial()
+        elif opcao == "0":
+            print("Encerrando o sistema.")
+            break
+        else:
+            print("[!] Opção inválida. Tente novamente.")
+
+if __name__ == "__main__":
+    menu()
